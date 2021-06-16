@@ -6,10 +6,17 @@
         "node": ">=12",
         "npm": ">=5"
     },
+    "scripts": {
+        "start_servers": "concurrently \"node server\" \"cd frontend && npm run start\""
+    },
     "engineStrict": true,
     "author": "Hyperledger",
     "license": "Apache-2.0",
     "dependencies": {
+        "concurrently": "^6.2.0",
+        "cors": "^2.8.5",
+        "dotenv": "^10.0.0",
+        "express": "^4.17.1",
         "fabric-ca-client": "^2.2.4",
         "fabric-network": "^2.2.4"
     }
