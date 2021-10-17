@@ -8,4 +8,4 @@ Steps to run:
 3. Run `./start_application.sh`
 4. Wait for the build and the application will automatically open in the browser.
 
-#### Note : Incase the application doesn't automatically open, go to the browser and manually navigate to `http://localhost:5000`
+#### Note : Incase the application doesn't automatically open, go to the browser and manually navigate to `http://localhost:3000`
