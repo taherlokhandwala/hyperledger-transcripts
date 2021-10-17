@@ -7,7 +7,9 @@
         "npm": ">=5"
     },
     "scripts": {
-        "start_servers": "concurrently \"node server\" \"cd frontend && npm run start\""
+        "start_servers": "concurrently \"nodemon server\" \"cd frontend && npm run start\"",
+        "start_new_servers": "concurrently \"nodemon server\" \"cd frontend_new && npm run start\"",
+        "start_web_server": "nodemon server"
     },
     "engineStrict": true,
     "author": "Hyperledger",
@@ -17,7 +19,14 @@
         "cors": "^2.8.5",
         "dotenv": "^10.0.0",
         "express": "^4.17.1",
+        "express-fileupload": "^1.2.1",
         "fabric-ca-client": "^2.2.4",
-        "fabric-network": "^2.2.4"
+        "fabric-network": "^2.2.4",
+        "jsonwebtoken": "^8.5.1",
+        "merge-pdf-buffers": "^1.0.3",
+        "uuid": "^8.3.2"
+    },
+    "devDependencies": {
+        "nodemon": "^2.0.12"
     }
 }

@@ -1,0 +1,27 @@
+body {
+  min-height: 100vh;
+}
+
+.header-container {
+  height: 12vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75em;
+  font-weight: 500;
+}
+
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.login {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 4rem;
+  align-items: center;
+  justify-content: center;
+}

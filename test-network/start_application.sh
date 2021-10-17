@@ -10,4 +10,4 @@ cd frontend
 npm install
 cd ..
 node enroll.js
-npm run start_servers
+npm run start_new_servers

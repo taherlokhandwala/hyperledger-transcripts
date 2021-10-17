@@ -24,13 +24,20 @@ const enroll = async () => {
     );
     const wallet = await buildWallet(Wallets, walletPath);
     await enrollAdmin(caClient, wallet, mspOrg1);
-    await registerAndEnrollUser(
-      caClient,
-      wallet,
-      mspOrg1,
-      org1UserId,
-      "org1.department1"
-    );
+    // await registerAndEnrollUser(
+    //   caClient,
+    //   wallet,
+    //   mspOrg1,
+    //   org1UserId,
+    //   "org1.department1"
+    // );
+    // await registerAndEnrollUser(
+    //   caClient,
+    //   wallet,
+    //   mspOrg1,
+    //   "appUser2",
+    //   "org1.department1"
+    // );
   } catch (error) {
     console.error(`******** FAILED to run the application: ${error}`);
   }
