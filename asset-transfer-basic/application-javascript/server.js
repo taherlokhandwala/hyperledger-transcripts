@@ -8,6 +8,7 @@ const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
+const CryptoJS = require("crypto-js");
 const { v4: uuidv4 } = require("uuid");
 const { merge } = require("merge-pdf-buffers");
 require("dotenv").config();
@@ -76,12 +77,17 @@ app.post("/create/asset", async (req, res) => {
     const network = await gateway.getNetwork(channelName);
     const contract = network.getContract(chaincodeName);
 
+    const transcript = req.files.transcript.data.toString("base64");
+    const hash = CryptoJS.SHA256(transcript);
+
     const result = await contract.submitTransaction(
       "CreateAsset",
       uuidv4(),
       req.body.srn,
-      req.files.transcript.data.toString("base64")
+      transcript,
+      hash.toString(CryptoJS.enc.Hex)
     );
+
     if (`${result}` !== "") {
       res.status(200).json({ message: "Transcript uploaded successfully" });
     } else throw new Error("Couldn't upload transcript");
@@ -103,6 +109,42 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+app.get("/get/assets/:srn", async (req, res) => {
+  const gateway = new Gateway();
+  try {
+    await gateway.connect(ccp, {
+      wallet,
+      identity: req.params.srn,
+      discovery: { enabled: true, asLocalhost: true },
+    });
+
+    const network = await gateway.getNetwork(channelName);
+    const contract = network.getContract(chaincodeName);
+
+    const result = await contract.evaluateTransaction(
+      "GetAllAssets",
+      req.params.srn
+    );
+    const record = JSON.parse(result);
+
+    const transcripts = [];
+    for (let i of record) {
+      transcripts.push(Buffer.from(i.transcript, "base64"));
+    }
+    const mergedBuffers = await merge(transcripts);
+
+    res.status(200).json({
+      transcripts: mergedBuffers,
+    });
+  } catch (error) {
+    res.status(403).json({
+      message: error.message,
+    });
+  } finally {
+    gateway.disconnect();
+  }
+});
+
 app.get("/get/assets", verifyToken, async (req, res) => {
   const gateway = new Gateway();
   try {
@@ -121,18 +163,16 @@ app.get("/get/assets", verifyToken, async (req, res) => {
       authData.username
     );
     const record = JSON.parse(result);
+
     const transcripts = [];
-    const ids = [];
     for (let i of record) {
       transcripts.push(Buffer.from(i.transcript, "base64"));
-      ids.push(i.ID);
     }
-    console.log(ids);
     const mergedBuffers = await merge(transcripts);
+
     res.status(200).json({
       transcripts: mergedBuffers,
       username: authData.username,
-      ids,
     });
   } catch (error) {
     res.status(403).json({
@@ -200,7 +240,7 @@ app.get("/get/users", async (req, res) => {
   }
 });
 
-app.get("/verify/:id", async (req, res) => {
+app.post("/verify", async (req, res) => {
   const gateway = new Gateway();
   try {
     await gateway.connect(ccp, {
@@ -212,9 +252,12 @@ app.get("/verify/:id", async (req, res) => {
     const network = await gateway.getNetwork(channelName);
     const contract = network.getContract(chaincodeName);
 
+    const transcript = req.files.transcript.data.toString("base64");
+    const hash = CryptoJS.SHA256(transcript);
+
     const result = await contract.evaluateTransaction(
-      "VerifyId",
-      req.params.id
+      "VerifyTranscript",
+      hash.toString(CryptoJS.enc.Hex)
     );
 
     const record = JSON.parse(result);

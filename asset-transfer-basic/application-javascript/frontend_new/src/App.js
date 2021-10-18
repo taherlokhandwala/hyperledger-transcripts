@@ -6,7 +6,8 @@ import Home from "./components/Home";
 import Register from "./components/Register";
 import Login from "./components/Login";
 import Transcript from "./components/Transcript";
-import Admin from "./components/Admin";
+import AdminUpload from "./components/AdminUpload";
+import AdminView from "./components/AdminView";
 import Verify from "./components/Verify";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -18,7 +19,8 @@ const App = () => {
         <Route path="/" exact component={Home} />
         <Route path="/register" exact component={Register} />
         <Route path="/login" exact component={Login} />
-        <Route path="/admin" exact component={Admin} />
+        <Route path="/admin" exact component={AdminUpload} />
+        <Route path="/admin/view" exact component={AdminView} />
         <Route path="/verify" exact component={Verify} />
         <ProtectedRoute path="/transcript" exact component={Transcript} />
       </Router>

@@ -56,11 +56,12 @@ class AssetTransfer extends Contract {
     }
   }
 
-  async CreateAsset(ctx, id, srn, transcript) {
+  async CreateAsset(ctx, id, srn, transcript, hash) {
     const asset = JSON.stringify({
       ID: id,
       srn,
       transcript,
+      hash,
     });
     console.log(asset);
     await ctx.stub.putState(id, Buffer.from(asset));
@@ -86,7 +87,7 @@ class AssetTransfer extends Contract {
     return JSON.stringify(allResults);
   }
 
-  async VerifyId(ctx, id) {
+  async VerifyTranscript(ctx, hash) {
     const iterator = await ctx.stub.getStateByRange("", "");
     let result = await iterator.next();
     while (!result.done) {
@@ -95,7 +96,7 @@ class AssetTransfer extends Contract {
       );
       try {
         const record = JSON.parse(strValue);
-        if (record.ID === id)
+        if (record.hash === hash)
           return JSON.stringify({
             status: true,
             srn: record.srn,

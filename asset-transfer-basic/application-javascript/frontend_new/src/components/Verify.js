@@ -1,26 +1,8 @@
 import React, { useState, useEffect } from "react";
-import {
-  TextField,
-  Paper,
-  makeStyles,
-  Typography,
-  withStyles,
-  Button,
-} from "@material-ui/core";
+import { Paper, makeStyles, Typography, Button } from "@material-ui/core";
 import { BASE_URL } from "../constants";
 import axios from "axios";
 import { useHistory } from "react-router-dom";
-
-const StyledTextField = withStyles({
-  root: {
-    "& label.Mui-focused": {
-      color: "#037afb",
-    },
-    "& .MuiInput-underline:after": {
-      borderBottomColor: "#037afb",
-    },
-  },
-})(TextField);
 
 const useStyles = makeStyles(() => ({
   loginTxtMain: {
@@ -32,6 +14,9 @@ const useStyles = makeStyles(() => ({
     fontSize: "1rem",
     marginTop: "0.5rem",
   },
+  input: {
+    display: "none",
+  },
   txtBox: {
     marginTop: "1rem",
   },
@@ -40,6 +25,9 @@ const useStyles = makeStyles(() => ({
     background: "#037afb",
     color: "#fff",
     fontWeight: 700,
+    "&:hover": {
+      background: "#037afb",
+    },
   },
   msgTxt: {
     fontWeight: 500,
@@ -53,11 +41,9 @@ const Verify = () => {
   const classes = useStyles();
   const history = useHistory();
   const token = localStorage.getItem("token");
-  const [id, setId] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [srn, setSrn] = useState("");
 
   useEffect(() => {
     if (token) {
@@ -66,21 +52,21 @@ const Verify = () => {
     // eslint-disable-next-line
   }, [token]);
 
-  const handleVerify = async () => {
+  const fileUpload = async (e) => {
     setVerifying(true);
     setError(false);
     setSuccess(false);
+    const form = new FormData();
+    form.append("transcript", e.target.files[0], e.target.files[0].name);
     try {
-      const { data, status } = await axios.get(`${BASE_URL}/verify/${id}`);
+      const { status } = await axios.post(`${BASE_URL}/verify`, form);
       if (status === 200) {
         setSuccess(true);
-        setSrn(data.srn);
-      } else {
-        throw new Error("error occured");
-      }
-    } catch (error) {
+      } else throw new Error("error occured");
+    } catch {
       setError(true);
     }
+    e.target.value = "";
     setVerifying(false);
   };
 
@@ -91,28 +77,28 @@ const Verify = () => {
           Verify Transcript
         </Typography>
         <Typography className={classes.loginTxt}>
-          Please enter transcript ID
+          Please upload the transcript for verification
         </Typography>
-        <StyledTextField
-          fullWidth
-          className={classes.txtBox}
-          size="small"
-          label="Transcript ID"
-          value={id}
-          onChange={(e) => setId(e.target.value)}
+        <input
+          className={classes.input}
+          id="contained-button-file"
+          type="file"
+          onChange={fileUpload}
         />
-        <Button
-          variant="contained"
-          size="medium"
-          disabled={verifying}
-          className={classes.verifyBtn}
-          style={{
-            opacity: verifying ? 0.6 : 1,
-          }}
-          onClick={handleVerify}
-        >
-          {verifying ? "Verifying..." : "Verify"}
-        </Button>
+        <label htmlFor="contained-button-file">
+          <Button
+            variant="contained"
+            size="medium"
+            component="span"
+            disabled={verifying}
+            className={classes.verifyBtn}
+            style={{
+              opacity: verifying ? 0.6 : 1,
+            }}
+          >
+            {verifying ? "Verifying..." : "Upload"}
+          </Button>
+        </label>
         {error && (
           <Typography className={classes.msgTxt} style={{ color: "red" }}>
             Invalid Transcript ID
@@ -120,7 +106,7 @@ const Verify = () => {
         )}
         {success && (
           <Typography className={classes.msgTxt} style={{ color: "green" }}>
-            Valid Transcript <br /> Belongs to {srn}
+            Valid Transcript
           </Typography>
         )}
       </Paper>

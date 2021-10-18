@@ -6,7 +6,7 @@ rm -r ../asset-transfer-basic/application-javascript/wallet
 ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-javascript/ -ccl javascript
 cd ../asset-transfer-basic/application-javascript
 npm install
-cd frontend
+cd frontend_new
 npm install
 cd ..
 node enroll.js

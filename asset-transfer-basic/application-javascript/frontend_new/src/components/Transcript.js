@@ -8,12 +8,7 @@ import {
 import axios from "axios";
 import { BASE_URL } from "../constants";
 import { useHistory } from "react-router-dom";
-import {
-  Worker,
-  Viewer,
-  SpecialZoomLevel,
-  LayerRenderStatus,
-} from "@react-pdf-viewer/core";
+import { Worker, Viewer, SpecialZoomLevel } from "@react-pdf-viewer/core";
 import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
 
 import "@react-pdf-viewer/core/lib/styles/index.css";
@@ -36,6 +31,9 @@ const useStyles = makeStyles(() => ({
     background: "#037afb",
     color: "#fff",
     fontWeight: 700,
+    "&:hover": {
+      background: "#037afb",
+    },
   },
   pdfContainer: {
     height: "650px",
@@ -60,7 +58,6 @@ const Transcript = () => {
     username: "",
   });
   const [pdfs, setPdfs] = useState(null);
-  const [id, setId] = useState(null);
 
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
@@ -73,8 +70,6 @@ const Transcript = () => {
           },
         });
         if (status === 200) {
-          console.log(data.ids[0]);
-          setId(data.ids[0]);
           setUsername({
             response: true,
             username: data.username,
@@ -92,38 +87,10 @@ const Transcript = () => {
     // eslint-disable-next-line
   }, [token]);
 
-  const customCanvasPlugin = () => {
-    const onCanvasLayerRender = (e) => {
-      if (e.status !== LayerRenderStatus.DidRender) {
-        return;
-      }
-
-      const canvas = e.ele;
-
-      const ctx = canvas.getContext("2d");
-      const centerX = canvas.width / 2;
-
-      const fonts = ctx.font.split(" ");
-      const fontSize = parseInt(fonts[0], 8);
-
-      ctx.textAlign = "center";
-      ctx.font = `${fontSize * e.scale * 4}px ${fonts[1]}`;
-
-      ctx.fillStyle = "#000";
-      ctx.fillText(id, centerX, 500);
-    };
-
-    return {
-      onCanvasLayerRender,
-    };
-  };
-
   const logoutUser = () => {
     localStorage.removeItem("token");
     history.push("/");
   };
-
-  const customCanvasPluginInstance = customCanvasPlugin();
 
   return (
     <div>
@@ -147,10 +114,7 @@ const Transcript = () => {
                 <Viewer
                   fileUrl={pdfs.data}
                   defaultScale={SpecialZoomLevel.PageFit}
-                  plugins={[
-                    defaultLayoutPluginInstance,
-                    customCanvasPluginInstance,
-                  ]}
+                  plugins={[defaultLayoutPluginInstance]}
                 />
               </div>
             )}
