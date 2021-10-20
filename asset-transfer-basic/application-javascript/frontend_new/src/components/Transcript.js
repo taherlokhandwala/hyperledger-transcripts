@@ -9,10 +9,11 @@ import axios from "axios";
 import { BASE_URL } from "../constants";
 import { useHistory } from "react-router-dom";
 import { Worker, Viewer, SpecialZoomLevel } from "@react-pdf-viewer/core";
-import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
+import { zoomPlugin } from "@react-pdf-viewer/zoom";
+import TranscriptTable from "./TranscriptTable";
 
 import "@react-pdf-viewer/core/lib/styles/index.css";
-import "@react-pdf-viewer/default-layout/lib/styles/index.css";
+import "@react-pdf-viewer/zoom/lib/styles/index.css";
 
 const useStyles = makeStyles(() => ({
   srnContainer: {
@@ -35,17 +36,39 @@ const useStyles = makeStyles(() => ({
       background: "#037afb",
     },
   },
+  mainContainer: {
+    display: "flex",
+    width: "100%",
+    marginBottom: 16,
+    alignItems: "center",
+  },
+  pdf: {
+    maxHeight: 750,
+    overflow: "auto",
+    flex: 2,
+    padding: 1,
+  },
   pdfContainer: {
-    height: "650px",
-    width: "50%",
-    margin: "16px auto",
-    border: "1px solid rgba(0, 0, 0, 0.3)",
+    width: "100%",
+    overflow: "auto",
+  },
+  tableContainer: {
+    flex: 1,
+    margin: "0px 16px",
   },
   waitContainer: {
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
+  },
+  zoomContainer: {
+    alignItems: "center",
+    backgroundColor: "#eeeeee",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.1)",
+    display: "flex",
+    justifyContent: "center",
+    padding: "4px",
   },
 }));
 
@@ -58,8 +81,9 @@ const Transcript = () => {
     username: "",
   });
   const [pdfs, setPdfs] = useState(null);
-
-  const defaultLayoutPluginInstance = defaultLayoutPlugin();
+  const [transcripts, setTranscripts] = useState(null);
+  const zoomPluginInstance = zoomPlugin();
+  const { ZoomInButton, ZoomOutButton, ZoomPopover } = zoomPluginInstance;
 
   useEffect(() => {
     const getData = async () => {
@@ -74,7 +98,8 @@ const Transcript = () => {
             response: true,
             username: data.username,
           });
-          setPdfs(data.transcripts);
+          setPdfs(data.mergedTranscripts);
+          setTranscripts(data.transcripts);
         } else {
           throw new Error("Invalid token");
         }
@@ -108,17 +133,34 @@ const Transcript = () => {
               Logout
             </Button>
           </div>
-          <Worker workerUrl="https://unpkg.com/pdfjs-dist@2.6.347/build/pdf.worker.min.js">
-            {pdfs && (
-              <div className={classes.pdfContainer}>
-                <Viewer
-                  fileUrl={pdfs.data}
-                  defaultScale={SpecialZoomLevel.PageFit}
-                  plugins={[defaultLayoutPluginInstance]}
+          <div className={classes.mainContainer}>
+            <div className={classes.pdf}>
+              <Worker workerUrl="https://unpkg.com/pdfjs-dist@2.6.347/build/pdf.worker.min.js">
+                {pdfs && (
+                  <div className={classes.pdfContainer}>
+                    <div className={classes.zoomContainer}>
+                      <ZoomOutButton />
+                      <ZoomPopover />
+                      <ZoomInButton />
+                    </div>
+                    <Viewer
+                      fileUrl={pdfs.data}
+                      defaultScale={SpecialZoomLevel.PageFit}
+                      plugins={[zoomPluginInstance]}
+                    />
+                  </div>
+                )}
+              </Worker>
+            </div>
+            <div className={classes.tableContainer}>
+              {transcripts && (
+                <TranscriptTable
+                  transcripts={transcripts}
+                  srn={username.username}
                 />
-              </div>
-            )}
-          </Worker>
+              )}
+            </div>
+          </div>
         </>
       ) : (
         <div className={classes.waitContainer}>

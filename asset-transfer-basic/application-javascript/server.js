@@ -52,7 +52,8 @@ const chaincodeName = "basic";
 const walletPath = path.join(__dirname, "wallet");
 const org1UserId = "appUser";
 const mspOrg1 = "Org1MSP";
-const secretKey = "secretkey";
+const secretKey = process.env.JWT_SECRET;
+const encKey = process.env.ENC_KEY;
 let wallet;
 const ccp = buildCCPOrg1();
 const caClient = buildCAClient(FabricCAServices, ccp, "ca.org1.example.com");
@@ -78,13 +79,14 @@ app.post("/create/asset", async (req, res) => {
     const contract = network.getContract(chaincodeName);
 
     const transcript = req.files.transcript.data.toString("base64");
+    const encTranscript = CryptoJS.AES.encrypt(transcript, encKey);
     const hash = CryptoJS.SHA256(transcript);
 
     const result = await contract.submitTransaction(
       "CreateAsset",
       uuidv4(),
       req.body.srn,
-      transcript,
+      encTranscript,
       hash.toString(CryptoJS.enc.Hex)
     );
 
@@ -129,7 +131,9 @@ app.get("/get/assets/:srn", async (req, res) => {
 
     const transcripts = [];
     for (let i of record) {
-      transcripts.push(Buffer.from(i.transcript, "base64"));
+      const decrypted = CryptoJS.AES.decrypt(i.transcript, encKey);
+      const transcript = decrypted.toString(CryptoJS.enc.Utf8);
+      transcripts.push(Buffer.from(transcript, "base64"));
     }
     const mergedBuffers = await merge(transcripts);
 
@@ -166,12 +170,17 @@ app.get("/get/assets", verifyToken, async (req, res) => {
 
     const transcripts = [];
     for (let i of record) {
-      transcripts.push(Buffer.from(i.transcript, "base64"));
+      const decrypted = CryptoJS.AES.decrypt(i.transcript, encKey);
+      const transcript = decrypted.toString(CryptoJS.enc.Utf8);
+      transcripts.push(Buffer.from(transcript, "base64"));
     }
+
+    const individualTranscripts = [...transcripts];
     const mergedBuffers = await merge(transcripts);
 
     res.status(200).json({
-      transcripts: mergedBuffers,
+      transcripts: individualTranscripts,
+      mergedTranscripts: mergedBuffers,
       username: authData.username,
     });
   } catch (error) {

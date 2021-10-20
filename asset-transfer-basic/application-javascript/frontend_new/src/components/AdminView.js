@@ -14,10 +14,10 @@ import axios from "axios";
 import { BASE_URL } from "../constants";
 import { useHistory } from "react-router-dom";
 import { Worker, Viewer, SpecialZoomLevel } from "@react-pdf-viewer/core";
-import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
+import { zoomPlugin } from "@react-pdf-viewer/zoom";
 
 import "@react-pdf-viewer/core/lib/styles/index.css";
-import "@react-pdf-viewer/default-layout/lib/styles/index.css";
+import "@react-pdf-viewer/zoom/lib/styles/index.css";
 
 const useStyles = makeStyles(() => ({
   loginTxtMain: {
@@ -30,18 +30,33 @@ const useStyles = makeStyles(() => ({
     marginTop: "0.5rem",
   },
   pdfContainer: {
-    height: "650px",
+    maxHeight: "750px",
+    overflow: "auto",
     width: "50%",
-    margin: "16px auto",
-    border: "1px solid rgba(0, 0, 0, 0.3)",
+    margin: "auto",
+    border: "2px solid rgba(0,0,0,0.3)",
+  },
+  zoomContainer: {
+    alignItems: "center",
+    backgroundColor: "#eeeeee",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.1)",
+    display: "flex",
+    justifyContent: "center",
+    padding: "4px",
+  },
+  pdf: {
+    width: "100%",
+    margin: "16px 0",
   },
 }));
 
 const AdminView = () => {
   const classes = useStyles();
   const history = useHistory();
-  const defaultLayoutPluginInstance = defaultLayoutPlugin();
   const token = localStorage.getItem("token");
+  const zoomPluginInstance = zoomPlugin();
+  const { ZoomInButton, ZoomOutButton, ZoomPopover } = zoomPluginInstance;
+
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState(false);
   const [users, setUsers] = useState([]);
@@ -199,15 +214,22 @@ const AdminView = () => {
         )}
       </Paper>
       {status.response && status.status && pdfs && (
-        <Worker workerUrl="https://unpkg.com/pdfjs-dist@2.6.347/build/pdf.worker.min.js">
-          <div className={classes.pdfContainer}>
-            <Viewer
-              fileUrl={pdfs.data}
-              defaultScale={SpecialZoomLevel.PageFit}
-              plugins={[defaultLayoutPluginInstance]}
-            />
-          </div>
-        </Worker>
+        <div className={classes.pdf}>
+          <Worker workerUrl="https://unpkg.com/pdfjs-dist@2.6.347/build/pdf.worker.min.js">
+            <div className={classes.pdfContainer}>
+              <div className={classes.zoomContainer}>
+                <ZoomOutButton />
+                <ZoomPopover />
+                <ZoomInButton />
+              </div>
+              <Viewer
+                fileUrl={pdfs.data}
+                defaultScale={SpecialZoomLevel.PageFit}
+                plugins={[zoomPluginInstance]}
+              />
+            </div>
+          </Worker>
+        </div>
       )}
     </div>
   );
