@@ -156,7 +156,9 @@ const Transcript = () => {
               {transcripts && (
                 <TranscriptTable
                   transcripts={transcripts}
+                  setTranscripts={setTranscripts}
                   srn={username.username}
+                  setUsername={setUsername}
                 />
               )}
             </div>

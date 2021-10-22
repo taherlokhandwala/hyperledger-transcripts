@@ -169,13 +169,15 @@ app.get("/get/assets", verifyToken, async (req, res) => {
     const record = JSON.parse(result);
 
     const transcripts = [];
+    const individualTranscripts = [];
     for (let i of record) {
       const decrypted = CryptoJS.AES.decrypt(i.transcript, encKey);
       const transcript = decrypted.toString(CryptoJS.enc.Utf8);
-      transcripts.push(Buffer.from(transcript, "base64"));
+      const transcriptBuffer = Buffer.from(transcript, "base64");
+      individualTranscripts.push({ ...i, transcript: transcriptBuffer });
+      transcripts.push(transcriptBuffer);
     }
 
-    const individualTranscripts = [...transcripts];
     const mergedBuffers = await merge(transcripts);
 
     res.status(200).json({
@@ -288,6 +290,52 @@ app.post("/verify", async (req, res) => {
   }
 });
 
+app.post("/update/asset/verify", async (req, res) => {
+  const gateway = new Gateway();
+  try {
+    await gateway.connect(ccp, {
+      wallet,
+      identity: "admin",
+      discovery: { enabled: true, asLocalhost: true },
+    });
+
+    const network = await gateway.getNetwork(channelName);
+    const contract = network.getContract(chaincodeName);
+
+    await contract.submitTransaction("UpdateAsset", req.body.ID);
+    res.status(200).json({
+      msg: `${req.body.ID} has been updated`,
+    });
+  } catch (error) {
+    res.status(500).json(error);
+  } finally {
+    gateway.disconnect();
+  }
+});
+
+app.post("/delete/asset", async (req, res) => {
+  const gateway = new Gateway();
+  try {
+    await gateway.connect(ccp, {
+      wallet,
+      identity: "admin",
+      discovery: { enabled: true, asLocalhost: true },
+    });
+
+    const network = await gateway.getNetwork(channelName);
+    const contract = network.getContract(chaincodeName);
+
+    await contract.submitTransaction("DeleteAsset", req.body.ID);
+    res.status(200).json({
+      msg: `${req.body.ID} has been updated`,
+    });
+  } catch (error) {
+    res.status(500).json(error);
+  } finally {
+    gateway.disconnect();
+  }
+});
+
 // ! Extra endpoints. To be deleted soon.
 app.get("/init_ledger", async (req, res) => {
   const gateway = new Gateway();
@@ -330,36 +378,6 @@ app.get("/read_asset/:assetID", async (req, res) => {
     if (`${result}` !== "") {
       res.status(200).json(JSON.parse(result.toString()));
     } else throw new Error("Couldn't create asset");
-  } catch (error) {
-    res.status(500).json(error);
-  } finally {
-    gateway.disconnect();
-  }
-});
-
-app.post("/update_asset", async (req, res) => {
-  const gateway = new Gateway();
-  try {
-    await gateway.connect(ccp, {
-      wallet,
-      identity: org1UserId,
-      discovery: { enabled: true, asLocalhost: true },
-    });
-
-    const network = await gateway.getNetwork(channelName);
-    const contract = network.getContract(chaincodeName);
-
-    await contract.submitTransaction(
-      "UpdateAsset",
-      req.body.ID,
-      req.body.color,
-      req.body.size,
-      req.body.owner,
-      req.body.appraisedValue
-    );
-    res.status(200).json({
-      msg: `${req.body.ID} has been updated`,
-    });
   } catch (error) {
     res.status(500).json(error);
   } finally {

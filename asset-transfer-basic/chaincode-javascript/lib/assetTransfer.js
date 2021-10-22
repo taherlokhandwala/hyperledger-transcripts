@@ -62,6 +62,7 @@ class AssetTransfer extends Contract {
       srn,
       transcript,
       hash,
+      verified: false,
     });
     console.log(asset);
     await ctx.stub.putState(id, Buffer.from(asset));
@@ -113,29 +114,17 @@ class AssetTransfer extends Contract {
     });
   }
 
-  async ReadAsset(ctx, id) {
-    const assetJSON = await ctx.stub.getState(id); // get the asset from chaincode state
-    if (!assetJSON || assetJSON.length === 0) {
-      throw new Error(`The asset ${id} does not exist`);
-    }
-    return assetJSON.toString();
-  }
-
-  async UpdateAsset(ctx, id, color, size, owner, appraisedValue) {
+  async UpdateAsset(ctx, id) {
     const exists = await this.AssetExists(ctx, id);
     if (!exists) {
       throw new Error(`The asset ${id} does not exist`);
     }
 
-    // overwriting original asset with new asset
-    const updatedAsset = {
-      ID: id,
-      Color: color,
-      Size: size,
-      Owner: owner,
-      AppraisedValue: appraisedValue,
-    };
-    return ctx.stub.putState(id, Buffer.from(JSON.stringify(updatedAsset)));
+    const asset = await ctx.stub.getState(id);
+    const assetJSON = JSON.parse(asset);
+    assetJSON.verified = true;
+
+    return ctx.stub.putState(id, Buffer.from(JSON.stringify(assetJSON)));
   }
 
   async DeleteAsset(ctx, id) {
@@ -149,6 +138,18 @@ class AssetTransfer extends Contract {
   async AssetExists(ctx, id) {
     const assetJSON = await ctx.stub.getState(id);
     return assetJSON && assetJSON.length > 0;
+  }
+
+  /*
+  ! Extra Chaincode function. To be deleted soon. 
+  */
+
+  async ReadAsset(ctx, id) {
+    const assetJSON = await ctx.stub.getState(id); // get the asset from chaincode state
+    if (!assetJSON || assetJSON.length === 0) {
+      throw new Error(`The asset ${id} does not exist`);
+    }
+    return assetJSON.toString();
   }
 
   async TransferAsset(ctx, id, newOwner) {
