@@ -34,10 +34,13 @@ createChannel() {
 	# Poll in case the raft leader is not set yet
 	local rc=1
 	local COUNTER=1
+	export ORDERER_CA=${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer$2.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+	export ORDERER_ADMIN_TLS_SIGN_CERT=${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer$2.example.com/tls/server.crt
+	export ORDERER_ADMIN_TLS_PRIVATE_KEY=${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer$2.example.com/tls/server.key
 	while [ $rc -ne 0 -a $COUNTER -lt $MAX_RETRY ] ; do
 		sleep $DELAY
 		set -x
-		osnadmin channel join --channelID $CHANNEL_NAME --config-block ./channel-artifacts/${CHANNEL_NAME}.block -o localhost:7053 --ca-file "$ORDERER_CA" --client-cert "$ORDERER_ADMIN_TLS_SIGN_CERT" --client-key "$ORDERER_ADMIN_TLS_PRIVATE_KEY" >&log.txt
+		osnadmin channel join --channelID $CHANNEL_NAME --config-block ./channel-artifacts/${CHANNEL_NAME}.block -o localhost:$1 --ca-file "$ORDERER_CA" --client-cert "$ORDERER_ADMIN_TLS_SIGN_CERT" --client-key "$ORDERER_ADMIN_TLS_PRIVATE_KEY" >&log.txt
 		res=$?
 		{ set +x; } 2>/dev/null
 		let rc=$res
@@ -54,6 +57,9 @@ joinChannel() {
   setGlobals $ORG
 	local rc=1
 	local COUNTER=1
+	export PEER_ORG_CA=${PWD}/organizations/peerOrganizations/org$1.example.com/peers/peer$2.org$1.example.com/tls/ca.crt
+    export CORE_PEER_TLS_ROOTCERT_FILE=$PEER_ORG_CA
+    export CORE_PEER_ADDRESS=localhost:$3
 	## Sometimes Join takes time, hence retry
 	while [ $rc -ne 0 -a $COUNTER -lt $MAX_RETRY ] ; do
     sleep $DELAY
@@ -84,14 +90,31 @@ BLOCKFILE="./channel-artifacts/${CHANNEL_NAME}.block"
 
 ## Create channel
 infoln "Creating channel ${CHANNEL_NAME}"
-createChannel
+createChannel 7053 0 
+successln "Channel '$CHANNEL_NAME' created"
+
+infoln "Creating channel ${CHANNEL_NAME}"
+createChannel 8053 1 
+successln "Channel '$CHANNEL_NAME' created"
+
+infoln "Creating channel ${CHANNEL_NAME}"
+createChannel 9053 2 
+successln "Channel '$CHANNEL_NAME' created"
+
+infoln "Creating channel ${CHANNEL_NAME}"
+createChannel 6053 3
 successln "Channel '$CHANNEL_NAME' created"
 
 ## Join all the peers to the channel
 infoln "Joining org1 peer to the channel..."
-joinChannel 1
+joinChannel 1 0 7051
+joinChannel 1 1 8051
+joinChannel 1 2 6051
+
 infoln "Joining org2 peer to the channel..."
-joinChannel 2
+joinChannel 2 0 9051
+joinChannel 2 1 5051
+joinChannel 2 2 4051
 
 ## Set the anchor peers for each org in the channel
 infoln "Setting anchor peer for org1..."
