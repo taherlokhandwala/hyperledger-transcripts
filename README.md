@@ -1,5 +1,9 @@
 # Transcript Processing
 
+Pre-Requisites:
+1. Please ensure you have node installed on your system. (Version 12.x.x or 14.x.x only)
+2. Please ensure you have docker and docker-compose installed on your system.
+
 Steps to run:
 
 1. Once you clone the repo go to the `test-network` directory <br />
